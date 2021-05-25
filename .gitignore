@@ -1,3 +1,5 @@
 json/
-lambda.py
-main.py
+test/
+.vscode/
+bundle.zip
+app.py
