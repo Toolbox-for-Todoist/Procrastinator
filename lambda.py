@@ -26,14 +26,13 @@ def get_access_token(user_id: str) -> str:
         error('ERROR: Unexpected error: Could not connect to MySQL instance.', 500)
     
     cursor = rds.cursor()
-    cursor.execute('select * from client_bearer.default where ID =\'{}\''.format(user_id))
+    cursor.execute(f'select * from client_bearer.default where ID =\'{user_id}\'')
     results = cursor.fetchone()
     cursor.close()
     rds.close()
     
     try:
-        # auth_token = results[1]
-        access_token = results[2]
+        access_token = results[1]
         return access_token
     except:
         error('ERROR: Unexpected error: Could not connect to MySQL instance.', 500)
@@ -43,14 +42,15 @@ def lambda_handler(event, context):
     # Can't add label if user isn't premium
     if event['initiator']['is_premium']:
         
+        content = event['event_data']['content']
         user_id = event['event_data']['user_id']
         task_id = int(event['event_data']['id'])
         event_name = event['event_name']
         date_added = event['event_data']['date_added'][0:10]
         due_date = event['event_data']['due']['date']
         procrastinated_days = (datetime.strptime(due_date, '%Y-%m-%d') - datetime.strptime(date_added,'%Y-%m-%d')).days
-        procrastinated_label = '拖延了{}天'.format(procrastinated_days)
-        
+        procrastinated_label = f'拖延了{procrastinated_days}天'
+
         # Add label to task only when it is updated due to procrastinating
         # Check if label exists because adding label will trigger this lambda function twice
         if event_name == 'item:updated' and date_added != due_date and procrastinated_label not in event['event_data']['labels']:
@@ -81,7 +81,7 @@ def lambda_handler(event, context):
                 task_labels.insert(0, procrastinated_dict[procrastinated_label])
                 task.update(labels=task_labels)
                 api.commit()
-                status = 'Added {}[{}] to {}'.format(procrastinated_label, procrastinated_dict[procrastinated_label], task['content'])
+                status = f'Added {procrastinated_label}[{procrastinated_dict[procrastinated_label]}] to {task["content"]}'
                 logging.info(status)
                 return {
                     'statusCode': 200,
