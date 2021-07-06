@@ -52,6 +52,11 @@ def lambda_handler(event, context):
     item_id = int(event['event_data']['id'])
     event_name = event['event_name']
     date_added = event['event_data']['date_added'][0:10]
+
+    ''' If due date is removed '''
+    if event['event_data']['due'] is None:
+        return status_code(200,'')
+    
     due_date = event['event_data']['due']['date']
     procrastinated_days = (datetime.strptime(due_date, '%Y-%m-%d') - datetime.strptime(date_added,'%Y-%m-%d')).days
     procrastinated_label = f'拖延了{procrastinated_days}天'
